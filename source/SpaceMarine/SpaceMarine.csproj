@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Puffin\Puffin.Core\Puffin.Core.csproj" />
     <ProjectReference Include="..\Puffin\Puffin.Infrastructure.MonoGame\Puffin.Infrastructure.MonoGame.csproj" />
+    <ProjectReference Include="..\Puffin\Puffin.UI\Puffin.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

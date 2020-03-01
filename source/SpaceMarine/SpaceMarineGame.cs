@@ -1,4 +1,5 @@
 using Puffin.Infrastructure.MonoGame;
+using DeenGames.SpaceMarine.Scenes;
 
 namespace DeenGames.SpaceMarine
 {
@@ -12,7 +13,7 @@ namespace DeenGames.SpaceMarine
 
         override protected void Ready()
         {
-            //this.ShowScene(new CoreGameScene());
+            this.ShowScene(new MapScene());
         }
     }
 }
