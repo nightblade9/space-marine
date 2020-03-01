@@ -10,16 +10,28 @@ namespace DeenGames.SpaceMarine.Scenes
 {
     class MapScene : Puffin.Core.Scene
     {
+        // View
         private TileMap tileMap;
         private TileMap entitiesTileMap;
+        private Entity statusLabel;
+
+        // Model
         private MapEntity player;
-        private AreaMap areaMap= new AreaMap();
+        private AreaMap areaMap;
 
         override public void Ready()
         {
-            this.BackgroundColour = 0x190D14;
+            // Models
+            this.areaMap = new AreaMap();
+
             this.player = new MapEntity() { 
-                TileX = Constants.MAP_TILES_WIDE / 2, TileY = Constants.MAP_TILES_HIGH / 2 };
+                TileX = Constants.MAP_TILES_WIDE / 2,
+                TileY = Constants.MAP_TILES_HIGH / 2
+            };
+
+            // Views
+
+            this.BackgroundColour = 0x190D14;
 
             tileMap = new TileMap(
                 Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH,
@@ -28,16 +40,15 @@ namespace DeenGames.SpaceMarine.Scenes
             
             tileMap.Define("Wall", 0, 0);
             
-            for (var x = 0; x < Constants.MAP_TILES_WIDE; x++)
-            {
-                tileMap[x, 0] = "Wall";
-                tileMap[x, Constants.MAP_TILES_HIGH - 1] = "Wall";
-            }
-
             for (var y = 0; y < Constants.MAP_TILES_HIGH; y++)
             {
-                tileMap[0, y] = "Wall";
-                tileMap[Constants.MAP_TILES_WIDE - 1, y] = "Wall";
+                for (var x = 0; x < Constants.MAP_TILES_WIDE; x++)
+                {
+                    if (!areaMap[x, y])
+                    {
+                        tileMap[x, y] = "Wall";
+                    }
+                }
             }
 
             this.Add(tileMap);
@@ -52,7 +63,18 @@ namespace DeenGames.SpaceMarine.Scenes
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.player.TileX, this.player.TileY] = "Player";
 
+            this.statusLabel = new Entity(true)
+                .Move(0, Constants.MAP_TILES_HIGH * Constants.TILE_HEIGHT * Constants.GAME_ZOOM)
+                .Colour(0x393238,
+                    Constants.MAP_TILES_WIDE * Constants.TILE_WIDTH * Constants.GAME_ZOOM,
+                    Constants.STATUS_BAR_HEIGHT)
+                // TODO: Puffin doesn't support label colour :/
+                .Label("Incoming aliens in: 5 ...\nhi mom", 4, 0);
+            this.Add(this.statusLabel);
+
             this.Add(new Entity().Camera(Constants.GAME_ZOOM));
+
+            // Event handlers
 
             this.OnActionPressed = this.ProcessPlayerInput;
         }

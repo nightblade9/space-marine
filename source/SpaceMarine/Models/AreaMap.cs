@@ -9,7 +9,7 @@ using Troschuetz.Random.Generators;
 
 namespace DeenGames.SpaceMarine.Models
 {
-    // Map of the ship or the planetoid
+    // Map of a planetoid
     class AreaMap
     {
         internal List<MapEntity> Monsters = new List<MapEntity>();
