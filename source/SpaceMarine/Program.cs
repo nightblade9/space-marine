@@ -1,12 +1,15 @@
 ﻿using System;
 
-namespace SpaceMarine
+namespace DeenGames.SpaceMarine
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            using (var game = new SpaceMarineGame())
+            {
+                game.Run();
+            }
         }
     }
 }

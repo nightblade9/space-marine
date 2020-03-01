@@ -848,7 +848,7 @@
   },
   "projectFileDependencyGroups": {
     ".NETCoreApp,Version=v3.1": [
-      "MonoGame.Framework.DesktopGL.Core",
+      "MonoGame.Framework.DesktopGL.Core >= 3.8.0.2",
       "Puffin.Core >= 1.0.0",
       "Puffin.Infrastructure.MonoGame >= 1.0.0"
     ]
@@ -897,7 +897,7 @@
         "dependencies": {
           "MonoGame.Framework.DesktopGL.Core": {
             "target": "Package",
-            "version": "(, )"
+            "version": "[3.8.0.2, )"
           }
         },
         "imports": [
