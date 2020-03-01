@@ -12,13 +12,14 @@ namespace DeenGames.SpaceMarine.Scenes
     {
         private TileMap tileMap;
         private TileMap entitiesTileMap;
-        private Player player;
+        private MapEntity player;
+        private AreaMap areaMap= new AreaMap();
 
         override public void Ready()
         {
             this.BackgroundColour = 0x190D14;
-            this.player = new Player() { 
-                X = Constants.MAP_TILES_WIDE / 2, Y = Constants.MAP_TILES_HIGH / 2 };
+            this.player = new MapEntity() { 
+                TileX = Constants.MAP_TILES_WIDE / 2, TileY = Constants.MAP_TILES_HIGH / 2 };
 
             tileMap = new TileMap(
                 Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH,
@@ -49,7 +50,7 @@ namespace DeenGames.SpaceMarine.Scenes
             this.entitiesTileMap.Define("Player", 0, 0);
 
             this.Add(this.entitiesTileMap);
-            this.entitiesTileMap[this.player.X, this.player.Y] = "Player";
+            this.entitiesTileMap[this.player.TileX, this.player.TileY] = "Player";
 
             this.Add(new Entity().Camera(Constants.GAME_ZOOM));
 
@@ -60,40 +61,30 @@ namespace DeenGames.SpaceMarine.Scenes
         {
             if (data is PuffinAction)
             {
-                this.entitiesTileMap[this.player.X, this.player.Y] = null;
+                this.entitiesTileMap[this.player.TileX, this.player.TileY] = null;
 
                 var action = (PuffinAction)data;
-                var moved = false;
 
                 // TODO: map mode
-                if (action == PuffinAction.Up && IsClear(this.player.X, this.player.Y - 1))
+                if (action == PuffinAction.Up)
                 {
-                    this.player.Y -= 1;
-                    moved = true;
+                    areaMap.TryToMove(this.player, 0, -1);
                 }
-                else if (action == PuffinAction.Down && IsClear(this.player.X, this.player.Y + 1))
+                else if (action == PuffinAction.Down)
                 {
-                    this.player.Y += 1;
-                    moved = true;
+                    areaMap.TryToMove(this.player, 0, 1);
                 }
-                else if (action == PuffinAction.Left && IsClear(this.player.X - 1, this.player.Y))
+                else if (action == PuffinAction.Left)
                 {
-                    this.player.X -= 1;
-                    moved = true;
+                    areaMap.TryToMove(this.player, -1, 0);
                 }
-                else if (action == PuffinAction.Right && IsClear(this.player.X + 1, this.player.Y))
+                else if (action == PuffinAction.Right)
                 {
-                    this.player.X += 1;
-                    moved = true;
+                    areaMap.TryToMove(this.player, 1, 0);
                 }
 
-                this.entitiesTileMap[this.player.X, this.player.Y] = "Player";
+                this.entitiesTileMap[this.player.TileX, this.player.TileY] = "Player";
             }
-        }
-
-        private bool IsClear(int x, int y)
-        {
-            return this.tileMap[x, y] == null && this.entitiesTileMap[x, y] == null;
         }
     }
 }
