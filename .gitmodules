@@ -1,0 +1,4 @@
+[submodule "source/Puffin"]
+	path = source/Puffin
+	url = https://github.com/nightblade9/puffin
+	branch = develop
