@@ -53,7 +53,7 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
             
             this.entitiesTileMap.Define("Player", 0, 0);
-            this.entitiesTileMap.Define("Alien", 0, 1);
+            this.entitiesTileMap.Define("Xarling", 1, 0);
 
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
@@ -62,10 +62,10 @@ namespace DeenGames.SpaceMarine.Scenes
             this.Add(this.statusLabel);
                 this.statusLabel.Move(0, Constants.MAP_TILES_HIGH * Constants.TILE_HEIGHT * Constants.GAME_ZOOM)
                 .Colour(0x393238,
-                    Constants.MAP_TILES_WIDE * Constants.TILE_WIDTH * Constants.GAME_ZOOM,
+                    (int)(Constants.MAP_TILES_WIDE * Constants.TILE_WIDTH * Constants.GAME_ZOOM),
                     Constants.STATUS_BAR_HEIGHT)
                 // TODO: Puffin doesn't support label colour :/
-                .Label("", 4, 0);
+                .Label("", 8, 8);
 
             this.Add(new Entity().Camera(Constants.GAME_ZOOM));
 
@@ -107,7 +107,7 @@ namespace DeenGames.SpaceMarine.Scenes
                 {
                     (int dx, int dy) = alien.Stalk(this.areaMap.Player);
                     areaMap.TryToMove(alien, dx, dy);
-                    this.entitiesTileMap[alien.TileX, alien.TileY] = "Alien";
+                    this.entitiesTileMap[alien.TileX, alien.TileY] = "Xarling";
                 }
             }
         }
