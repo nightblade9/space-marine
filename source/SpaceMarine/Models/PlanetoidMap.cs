@@ -112,11 +112,12 @@ namespace DeenGames.SpaceMarine.Models
         private void SpawnMoreOverlords()
         {
             var random = new Random();
+            var cornerOffset = MONSTER_TILE_SPAWN_RADIUS + 2; // spacing from walls
             var corners = new List<Tuple<int, int>> {
-                new Tuple<int, int>(5, 5),
-                new Tuple<int, int>(Constants.MAP_TILES_WIDE - 5, 5),
-                new Tuple<int, int>(Constants.MAP_TILES_WIDE - 5, Constants.MAP_TILES_HIGH - 5),
-                new Tuple<int, int>(5, Constants.MAP_TILES_HIGH - 5),
+                new Tuple<int, int>(cornerOffset, cornerOffset),
+                new Tuple<int, int>(Constants.MAP_TILES_WIDE - cornerOffset, cornerOffset),
+                new Tuple<int, int>(Constants.MAP_TILES_WIDE - cornerOffset, Constants.MAP_TILES_HIGH - cornerOffset),
+                new Tuple<int, int>(cornerOffset, Constants.MAP_TILES_HIGH - cornerOffset),
             };
 
             var spawnPoints = corners.OrderBy(r => random.Next()).Take(2);

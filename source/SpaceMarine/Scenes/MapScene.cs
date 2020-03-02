@@ -71,6 +71,9 @@ namespace DeenGames.SpaceMarine.Scenes
             // Event handlers
             this.EventBus.Subscribe(SpaceMarineEvent.ShowMessage, (message) => this.ShowMessage((string)message));
             this.OnActionPressed = this.ProcessPlayerInput;
+
+            // Trigger initial message. TODO: tutorial here.
+            this.areaMap.OnPlayerIntendToMove(0, 0);
         }
 
         private void ProcessPlayerInput(object data)
