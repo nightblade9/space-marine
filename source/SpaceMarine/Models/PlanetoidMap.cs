@@ -15,6 +15,8 @@ namespace DeenGames.SpaceMarine.Models
         internal List<MapEntity> Monsters = new List<MapEntity>();
         internal readonly MapEntity Player;
 
+        private const float MONSTER_TILE_SPAWN_PROBABILITY = 0.5f;
+        private const int MONSTER_TILE_SPAWN_RADIUS = 1;
         private readonly ArrayMap<bool> isWalkable;
         // In TILES
         private readonly int width;
@@ -30,14 +32,10 @@ namespace DeenGames.SpaceMarine.Models
             this.width = Constants.MAP_TILES_WIDE;
             this.height = Constants.MAP_TILES_HIGH;
             this.isWalkable = new ArrayMap<bool>(Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH);
-            this.Player = new MapEntity();
+            this.Player = new MapEntity(this.width / 2, this.height / 2);
 
             this.GenerateMap();
-            // TODO: more sophisticated.
-            Player.TileX = this.width / 2;
-            Player.TileY =  this.height / 2;
             this.GenerateMonsters();
-
             this.IncrementWave();
         }
 
@@ -106,6 +104,34 @@ namespace DeenGames.SpaceMarine.Models
                 else
                 {
                     this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, "Alien life-forms detected.");
+                    this.SpawnMoreOverlords();
+                }
+            }
+        }
+
+        private void SpawnMoreOverlords()
+        {
+            var random = new Random();
+            var corners = new List<Tuple<int, int>> {
+                new Tuple<int, int>(5, 5),
+                new Tuple<int, int>(Constants.MAP_TILES_WIDE - 5, 5),
+                new Tuple<int, int>(Constants.MAP_TILES_WIDE - 5, Constants.MAP_TILES_HIGH - 5),
+                new Tuple<int, int>(5, Constants.MAP_TILES_HIGH - 5),
+            };
+
+            var spawnPoints = corners.OrderBy(r => random.Next()).Take(2);
+            foreach (var spawnPoint in spawnPoints)
+            {
+                // Spawn stuff in a random 3x3 radius. Each point has an independent chance of spawning a monster.
+                for (var y = spawnPoint.Item2 - MONSTER_TILE_SPAWN_RADIUS; y <= spawnPoint.Item2 + MONSTER_TILE_SPAWN_RADIUS; y++)
+                {
+                    for (var x = spawnPoint.Item1 - MONSTER_TILE_SPAWN_RADIUS; x <= spawnPoint.Item1 + MONSTER_TILE_SPAWN_RADIUS; x++)
+                    {
+                        if (random.NextDouble() <= MONSTER_TILE_SPAWN_PROBABILITY)
+                        {
+                            this.Monsters.Add(new MapEntity(x, y));
+                        }
+                    }
                 }
             }
         }

@@ -52,6 +52,7 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
             
             this.entitiesTileMap.Define("Player", 0, 0);
+            this.entitiesTileMap.Define("Monster", 0, 1);
 
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
@@ -76,7 +77,7 @@ namespace DeenGames.SpaceMarine.Scenes
         {
             if (data is PuffinAction)
             {
-                this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = null;
+                this.entitiesTileMap.Clear();
 
                 var action = (PuffinAction)data;
 
@@ -99,6 +100,10 @@ namespace DeenGames.SpaceMarine.Scenes
                 }
 
                 this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
+                foreach (var monster in this.areaMap.Monsters)
+                {
+                    this.entitiesTileMap[monster.TileX, monster.TileY] = "Monster";
+                }
             }
         }
 
