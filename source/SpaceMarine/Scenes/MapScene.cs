@@ -16,21 +16,14 @@ namespace DeenGames.SpaceMarine.Scenes
         private Entity statusLabel;
 
         // Model
-        private MapEntity player;
         private PlanetoidMap areaMap;
 
         override public void Ready()
         {
             // Models
-            this.areaMap = new PlanetoidMap();
-
-            this.player = new MapEntity() { 
-                TileX = Constants.MAP_TILES_WIDE / 2,
-                TileY = Constants.MAP_TILES_HIGH / 2
-            };
+            this.areaMap = new PlanetoidMap(this.EventBus);
 
             // Views
-
             this.BackgroundColour = 0x190D14;
 
             tileMap = new TileMap(
@@ -61,21 +54,21 @@ namespace DeenGames.SpaceMarine.Scenes
             this.entitiesTileMap.Define("Player", 0, 0);
 
             this.Add(this.entitiesTileMap);
-            this.entitiesTileMap[this.player.TileX, this.player.TileY] = "Player";
+            this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
 
-            this.statusLabel = new Entity(true)
-                .Move(0, Constants.MAP_TILES_HIGH * Constants.TILE_HEIGHT * Constants.GAME_ZOOM)
+            this.statusLabel = new Entity(true);
+            this.Add(this.statusLabel);
+                this.statusLabel.Move(0, Constants.MAP_TILES_HIGH * Constants.TILE_HEIGHT * Constants.GAME_ZOOM)
                 .Colour(0x393238,
                     Constants.MAP_TILES_WIDE * Constants.TILE_WIDTH * Constants.GAME_ZOOM,
                     Constants.STATUS_BAR_HEIGHT)
                 // TODO: Puffin doesn't support label colour :/
-                .Label("Incoming aliens in: 5 ...\nhi mom", 4, 0);
-            this.Add(this.statusLabel);
+                .Label("", 4, 0);
 
             this.Add(new Entity().Camera(Constants.GAME_ZOOM));
 
             // Event handlers
-
+            this.EventBus.Subscribe(SpaceMarineEvent.ShowMessage, (message) => this.ShowMessage((string)message));
             this.OnActionPressed = this.ProcessPlayerInput;
         }
 
@@ -83,30 +76,35 @@ namespace DeenGames.SpaceMarine.Scenes
         {
             if (data is PuffinAction)
             {
-                this.entitiesTileMap[this.player.TileX, this.player.TileY] = null;
+                this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = null;
 
                 var action = (PuffinAction)data;
 
                 // TODO: map mode
                 if (action == PuffinAction.Up)
                 {
-                    areaMap.TryToMove(this.player, 0, -1);
+                    areaMap.OnPlayerIntendToMove(0, -1);
                 }
                 else if (action == PuffinAction.Down)
                 {
-                    areaMap.TryToMove(this.player, 0, 1);
+                    areaMap.OnPlayerIntendToMove(0, 1);
                 }
                 else if (action == PuffinAction.Left)
                 {
-                    areaMap.TryToMove(this.player, -1, 0);
+                    areaMap.OnPlayerIntendToMove(-1, 0);
                 }
                 else if (action == PuffinAction.Right)
                 {
-                    areaMap.TryToMove(this.player, 1, 0);
+                    areaMap.OnPlayerIntendToMove(1, 0);
                 }
 
-                this.entitiesTileMap[this.player.TileX, this.player.TileY] = "Player";
+                this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
             }
+        }
+
+        private void ShowMessage(string message)
+        {
+            this.statusLabel.Get<TextLabelComponent>().Text = message;
         }
     }
 }
