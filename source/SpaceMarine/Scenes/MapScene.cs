@@ -4,6 +4,7 @@ using Puffin.Core.Ecs;
 using Puffin.Core.Ecs.Components;
 using Puffin.Core.IO;
 using Puffin.Core.Tiles;
+using System;
 using System.IO;
 
 namespace DeenGames.SpaceMarine.Scenes
@@ -84,7 +85,6 @@ namespace DeenGames.SpaceMarine.Scenes
 
                 var action = (PuffinAction)data;
 
-                // TODO: map mode
                 if (action == PuffinAction.Up)
                 {
                     areaMap.OnPlayerIntendToMove(0, -1);
@@ -105,6 +105,8 @@ namespace DeenGames.SpaceMarine.Scenes
                 this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
                 foreach (var monster in this.areaMap.Monsters)
                 {
+                    (int dx, int dy) = monster.Stalk(this.areaMap.Player);
+                    areaMap.TryToMove(monster, dx, dy);
                     this.entitiesTileMap[monster.TileX, monster.TileY] = "Monster";
                 }
             }
