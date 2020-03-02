@@ -10,14 +10,22 @@ namespace DeenGames.SpaceMarine.Models
 
         public int TileX { get; set; }
         public int TileY { get; set; }
+        public int CurrentHealth { get; set; }
+        public int TotalHealth { get; private set; }
+        public int Strength { get; private set; }
+        public int Defense { get; private set; }
 
-        public MapEntity(int x, int y)
+        public MapEntity(int totalHealth, int strength, int defense, int x, int y)
         {
+            this.CurrentHealth = totalHealth;
+            this.TotalHealth = totalHealth;
+            this.Strength = strength;
+            this.Defense = defense;
             this.TileX = x;
             this.TileY = y;
         }
 
-        // For monsters: figure out how to move toward target
+        // For aliens: figure out how to move toward target
         public Tuple<int, int> Stalk(MapEntity target)
         {
             var dx = target.TileX - this.TileX;

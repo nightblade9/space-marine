@@ -1,30 +1,34 @@
+using DeenGames.SpaceMarine.Helpers;
+using Puffin.Core.Events;
+using GoRogue.MapGeneration;
+using GoRogue.MapViews;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GoRogue.MapGeneration;
-using GoRogue.MapViews;
-using Puffin.Core.Events;
-using Troschuetz.Random;
-using Troschuetz.Random.Generators;
 
 namespace DeenGames.SpaceMarine.Models
 {
     // Map of a planetoid
     class PlanetoidMap
     {
-        internal List<MapEntity> Monsters = new List<MapEntity>();
+        internal List<MapEntity> Aliens = new List<MapEntity>();
         internal readonly MapEntity Player;
+        internal int CurrentWaveNumber = 0; // floor number
 
-        private const float MONSTER_TILE_SPAWN_PROBABILITY = 0.5f;
-        private const int MONSTER_TILE_SPAWN_RADIUS = 1;
+        private const float ALIEN_TILE_SPAWN_PROBABILITY = 0.5f;
+        private const int ALIEN_TILE_SPAWN_RADIUS = 1;
+        private const int PLAYER_STARTING_HEALTH = 250;
+        private const int PLAYER_STRENGTH = 20;
+        private const int PLAYER_DEFENSE = 10;
+
         private readonly ArrayMap<bool> isWalkable;
         // In TILES
         private readonly int width;
         private readonly int height;
         private const int CountDownMoves = 10;
-        private int currentWaveNumber = 0; // floor number
         private int countDownLeft = 0;
         private EventBus eventBus;
+        private bool gameOver = false;
         
         public PlanetoidMap(EventBus eventBus)
         {
@@ -32,10 +36,10 @@ namespace DeenGames.SpaceMarine.Models
             this.width = Constants.MAP_TILES_WIDE;
             this.height = Constants.MAP_TILES_HIGH;
             this.isWalkable = new ArrayMap<bool>(Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH);
-            this.Player = new MapEntity(this.width / 2, this.height / 2);
+            this.Player = new MapEntity(PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
 
             this.GenerateMap();
-            this.GenerateMonsters();
+            this.GenerateAliens();
             this.IncrementWave();
         }
 
@@ -48,12 +52,22 @@ namespace DeenGames.SpaceMarine.Models
 
         public void OnPlayerIntendToMove(int deltaX, int deltaY)
         {
+            if (gameOver)
+            {
+                return;
+            }
+
             this.TryToMove(this.Player, deltaX, deltaY);
             this.UpdateCountDown();
         }
 
         public void TryToMove(MapEntity entity, int deltaX, int deltaY)
         {
+            if (gameOver)
+            {
+                return;
+            }
+
             var destinationX = entity.TileX + deltaX;
             var destinationY = entity.TileY + deltaY;
 
@@ -62,14 +76,28 @@ namespace DeenGames.SpaceMarine.Models
             {
                 return;
             }
-            else if (this.Monsters.Any(m => m.TileX == destinationX && m.TileY == destinationY))
+            else if (this.Aliens.Any(m => m.TileX == destinationX && m.TileY == destinationY))
             {
-                var target = this.Monsters.Single(m => m.TileX == destinationX && m.TileY == destinationY);
-                // damage target
+                var target = this.Aliens.Single(m => m.TileX == destinationX && m.TileY == destinationY);
+                var damage = DamageCalculator.CalculateDamage(entity, target);
+                target.CurrentHealth -= damage;
+                this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"Alien hits alien for {damage} damage! {(target.CurrentHealth <= 0 ? "It dies!" : "")}");
+
+                if (target.CurrentHealth <= 0)
+                {
+                    this.Aliens.Remove(target);
+                }
             }
             else if (this.Player.TileX == destinationX && this.Player.TileY == destinationY)
             {
-                // damage player
+                var damage = DamageCalculator.CalculateDamage(entity, this.Player);
+                this.Player.CurrentHealth -= damage;
+                this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"Alien hits you for {damage} damage! {(this.Player.CurrentHealth <= 0 ? "YOU DIE!" : "")}");
+
+                if (this.Player.CurrentHealth <= 0)
+                {
+                    this.gameOver = true;
+                }
             }
             else
             {
@@ -79,17 +107,17 @@ namespace DeenGames.SpaceMarine.Models
             }
         }
         
-        public void GenerateMonsters()
+        public void GenerateAliens()
         {
             var random = new Random();
             // TODO: more sophisticated.
-            var numMonsters = random.Next(6, 10);
+            var numAliens = random.Next(6, 10);
         }
 
         private void IncrementWave()
         {
             this.countDownLeft = CountDownMoves;
-            this.currentWaveNumber++;
+            this.CurrentWaveNumber++;
         }
 
         private void UpdateCountDown()
@@ -99,7 +127,7 @@ namespace DeenGames.SpaceMarine.Models
                 this.countDownLeft--;
                 if (this.countDownLeft > 0)
                 {
-                    this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{this.countDownLeft} seconds until the next wave ...");
+                    this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{this.countDownLeft} seconds until impact.");
                 }
                 else
                 {
@@ -112,7 +140,7 @@ namespace DeenGames.SpaceMarine.Models
         private void SpawnMoreOverlords()
         {
             var random = new Random();
-            var cornerOffset = MONSTER_TILE_SPAWN_RADIUS + 2; // spacing from walls
+            var cornerOffset = ALIEN_TILE_SPAWN_RADIUS + 2; // spacing from walls
             var corners = new List<Tuple<int, int>> {
                 new Tuple<int, int>(cornerOffset, cornerOffset),
                 new Tuple<int, int>(Constants.MAP_TILES_WIDE - cornerOffset, cornerOffset),
@@ -123,14 +151,14 @@ namespace DeenGames.SpaceMarine.Models
             var spawnPoints = corners.OrderBy(r => random.Next()).Take(2);
             foreach (var spawnPoint in spawnPoints)
             {
-                // Spawn stuff in a random 3x3 radius. Each point has an independent chance of spawning a monster.
-                for (var y = spawnPoint.Item2 - MONSTER_TILE_SPAWN_RADIUS; y <= spawnPoint.Item2 + MONSTER_TILE_SPAWN_RADIUS; y++)
+                // Spawn stuff in a random 3x3 radius. Each point has an independent chance of spawning an alien.
+                for (var y = spawnPoint.Item2 - ALIEN_TILE_SPAWN_RADIUS; y <= spawnPoint.Item2 + ALIEN_TILE_SPAWN_RADIUS; y++)
                 {
-                    for (var x = spawnPoint.Item1 - MONSTER_TILE_SPAWN_RADIUS; x <= spawnPoint.Item1 + MONSTER_TILE_SPAWN_RADIUS; x++)
+                    for (var x = spawnPoint.Item1 - ALIEN_TILE_SPAWN_RADIUS; x <= spawnPoint.Item1 + ALIEN_TILE_SPAWN_RADIUS; x++)
                     {
-                        if (random.NextDouble() <= MONSTER_TILE_SPAWN_PROBABILITY)
+                        if (random.NextDouble() <= ALIEN_TILE_SPAWN_PROBABILITY)
                         {
-                            this.Monsters.Add(new MapEntity(x, y));
+                            this.Aliens.Add(AlienSpawner.Spawn("Xarling", x, y));
                         }
                     }
                 }

@@ -53,7 +53,7 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
             
             this.entitiesTileMap.Define("Player", 0, 0);
-            this.entitiesTileMap.Define("Monster", 0, 1);
+            this.entitiesTileMap.Define("Alien", 0, 1);
 
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
@@ -74,7 +74,7 @@ namespace DeenGames.SpaceMarine.Scenes
             this.OnActionPressed = this.ProcessPlayerInput;
 
             // Trigger initial message. TODO: tutorial here.
-            this.areaMap.OnPlayerIntendToMove(0, 0);
+            this.ShowMessage("Alien meteors inbound.");
         }
 
         private void ProcessPlayerInput(object data)
@@ -103,18 +103,21 @@ namespace DeenGames.SpaceMarine.Scenes
                 }
 
                 this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
-                foreach (var monster in this.areaMap.Monsters)
+                foreach (var alien in this.areaMap.Aliens.ToArray())
                 {
-                    (int dx, int dy) = monster.Stalk(this.areaMap.Player);
-                    areaMap.TryToMove(monster, dx, dy);
-                    this.entitiesTileMap[monster.TileX, monster.TileY] = "Monster";
+                    (int dx, int dy) = alien.Stalk(this.areaMap.Player);
+                    areaMap.TryToMove(alien, dx, dy);
+                    this.entitiesTileMap[alien.TileX, alien.TileY] = "Alien";
                 }
             }
         }
 
         private void ShowMessage(string message)
         {
-            this.statusLabel.Get<TextLabelComponent>().Text = message;
+            var player = this.areaMap.Player;
+            this.statusLabel.Get<TextLabelComponent>().Text = 
+                $"Health: {player.CurrentHealth}/{player.TotalHealth}\tWave {this.areaMap.CurrentWaveNumber}\n{message}";
+            Console.WriteLine(message);
         }
     }
 }
