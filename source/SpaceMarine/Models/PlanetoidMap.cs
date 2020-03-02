@@ -10,7 +10,7 @@ using Troschuetz.Random.Generators;
 namespace DeenGames.SpaceMarine.Models
 {
     // Map of a planetoid
-    class AreaMap
+    class PlanetoidMap
     {
         internal List<MapEntity> Monsters = new List<MapEntity>();
         internal readonly MapEntity Player;
@@ -20,7 +20,7 @@ namespace DeenGames.SpaceMarine.Models
         private readonly int width = 0;
         private readonly int height = 0;
         
-        public AreaMap()
+        public PlanetoidMap()
         {
             this.width = Constants.MAP_TILES_WIDE;
             this.height = Constants.MAP_TILES_HIGH;

@@ -17,12 +17,12 @@ namespace DeenGames.SpaceMarine.Scenes
 
         // Model
         private MapEntity player;
-        private AreaMap areaMap;
+        private PlanetoidMap areaMap;
 
         override public void Ready()
         {
             // Models
-            this.areaMap = new AreaMap();
+            this.areaMap = new PlanetoidMap();
 
             this.player = new MapEntity() { 
                 TileX = Constants.MAP_TILES_WIDE / 2,
