@@ -5,6 +5,7 @@ using Puffin.Core.Ecs.Components;
 using Puffin.Core.IO;
 using Puffin.Core.Tiles;
 using System;
+using System.Linq;
 using System.IO;
 
 namespace DeenGames.SpaceMarine.Scenes
@@ -108,6 +109,21 @@ namespace DeenGames.SpaceMarine.Scenes
                     (int dx, int dy) = alien.Stalk(this.areaMap.Player);
                     areaMap.TryToMove(alien, dx, dy);
                     this.entitiesTileMap[alien.TileX, alien.TileY] = "Xarling";
+                }
+            }
+            else if (data is SpaceMarineEvent)
+            {
+                var marineEvent = (SpaceMarineEvent)data;
+                if (marineEvent == SpaceMarineEvent.AimOrFire)
+                {
+                    var target = this.areaMap.Aliens.OrderByDescending(
+                        a => GoRogue.Distance.EUCLIDEAN.Calculate(a.TileX, a.TileY, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
+                        .FirstOrDefault();
+                    
+                    if (target != null)
+                    {
+                        var line = GoRogue.Lines.Get(new GoRogue.Coord(target.TileX, target.TileY), new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY));
+                    }
                 }
             }
         }
