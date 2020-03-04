@@ -20,8 +20,12 @@ namespace DeenGames.SpaceMarine.Models
         private const int PLAYER_STARTING_HEALTH = 250;
         private const int PLAYER_STRENGTH = 20;
         private const int PLAYER_DEFENSE = 10;
+        private const int NUM_CLUSTERS = 6;
+        private const int MIN_CLUSTER_SIZE = 5;
+        private const int MAX_CLUSTER_SIZE = 8;
 
         private readonly ArrayMap<bool> isWalkable;
+        private readonly Random random = new Random();
         // In TILES
         private readonly int width;
         private readonly int height;
@@ -109,7 +113,6 @@ namespace DeenGames.SpaceMarine.Models
         
         public void GenerateAliens()
         {
-            var random = new Random();
             // TODO: more sophisticated.
             var numAliens = random.Next(6, 10);
         }
@@ -139,7 +142,6 @@ namespace DeenGames.SpaceMarine.Models
 
         private void SpawnMoreOverlords()
         {
-            var random = new Random();
             var cornerOffset = ALIEN_TILE_SPAWN_RADIUS + 2; // spacing from walls
             var corners = new List<Tuple<int, int>> {
                 new Tuple<int, int>(cornerOffset, cornerOffset),
@@ -168,6 +170,53 @@ namespace DeenGames.SpaceMarine.Models
         private void GenerateMap()
         {
             QuickGenerators.GenerateRectangleMap(isWalkable);
+            var clustersLeft = NUM_CLUSTERS;
+
+            while (clustersLeft-- > 0)
+            {
+                var x = random.Next(this.width);
+                var y = random.Next(this.height);
+                var numTiles = random.Next(MIN_CLUSTER_SIZE, MAX_CLUSTER_SIZE + 1);
+                this.RandomWalk(x, y, numTiles, false);
+            }
+        }
+
+        private void RandomWalk(int startX, int startY, int numTiles, bool makeWalkable)
+        {
+            var tries = 0;
+            var numLeft = numTiles;
+            var x = startX;
+            var y = startY;
+
+            while (numLeft > 0 && tries++ < 1000)
+            {
+                if (x < 0) {
+                    x = 0;
+                } else if (x >= width)
+                {
+                    x = width - 1;
+                }
+                if (y < 0) {
+                    y = 0;
+                } else if (y >= height)
+                {
+                    y = height - 1;
+                }
+
+                if (this.isWalkable[x, y] != makeWalkable)
+                {
+                    this.isWalkable[x, y] = makeWalkable;
+                    numLeft--;
+                }
+
+                var isX = random.NextDouble() < 0.5;
+                var delta = random.Next(-1, 2);
+                if (isX) {
+                    x += delta;
+                } else {
+                    y += delta;
+                }
+            }
         }
     }
 }
