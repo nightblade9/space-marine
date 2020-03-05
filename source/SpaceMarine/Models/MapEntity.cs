@@ -14,9 +14,11 @@ namespace DeenGames.SpaceMarine.Models
         public int TotalHealth { get; private set; }
         public int Strength { get; private set; }
         public int Defense { get; private set; }
+        public string Name { get; private set; }
 
-        public MapEntity(int totalHealth, int strength, int defense, int x, int y)
+        public MapEntity(string name, int totalHealth, int strength, int defense, int x, int y)
         {
+            this.Name = name;
             this.CurrentHealth = totalHealth;
             this.TotalHealth = totalHealth;
             this.Strength = strength;

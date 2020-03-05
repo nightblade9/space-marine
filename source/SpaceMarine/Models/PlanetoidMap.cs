@@ -23,6 +23,7 @@ namespace DeenGames.SpaceMarine.Models
         private const int NUM_CLUSTERS = 6;
         private const int MIN_CLUSTER_SIZE = 5;
         private const int MAX_CLUSTER_SIZE = 8;
+        private const float RAYON_SPAWN_PROBABILITY = 0.3f;
 
         private readonly ArrayMap<bool> isWalkable;
         private readonly Random random = new Random();
@@ -40,7 +41,7 @@ namespace DeenGames.SpaceMarine.Models
             this.width = Constants.MAP_TILES_WIDE;
             this.height = Constants.MAP_TILES_HIGH;
             this.isWalkable = new ArrayMap<bool>(Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH);
-            this.Player = new MapEntity(PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
+            this.Player = new MapEntity("Player", PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
 
             this.GenerateMap();
             this.IncrementWave();
@@ -180,7 +181,8 @@ namespace DeenGames.SpaceMarine.Models
                     {
                         if (this.isWalkable[x, y] && random.NextDouble() <= ALIEN_TILE_SPAWN_PROBABILITY)
                         {
-                            this.Aliens.Add(AlienSpawner.Spawn("Xarling", x, y));
+                            var alien = random.NextDouble() <= RAYON_SPAWN_PROBABILITY ? "Rayon" : "Xarling";
+                            this.Aliens.Add(AlienSpawner.Spawn(alien, x, y));
                         }
                     }
                 }

@@ -9,9 +9,12 @@ namespace DeenGames.SpaceMarine.Helpers
         {
             switch (name)
             {
-                case "Xarling": return new MapEntity(50, 25, 5, x, y);
+                case "Xarling":
+                    return new MapEntity(name, 50, 25, 5, x, y);
+                case "Rayon":
+                    return new MapEntity(name, 25, 15, 10, x, y);
                 default:
-                throw new ArgumentException($"Not sure how to spawn a(n) {name}!");
+                    throw new ArgumentException($"Not sure how to spawn a(n) {name}!");
             }
         }
     }

@@ -60,6 +60,7 @@ namespace DeenGames.SpaceMarine.Scenes
             
             this.entitiesTileMap.Define("Player", 0, 0);
             this.entitiesTileMap.Define("Xarling", 0, 1);
+            this.entitiesTileMap.Define("Rayon", 1, 1);
 
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
@@ -177,7 +178,7 @@ namespace DeenGames.SpaceMarine.Scenes
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
             foreach (var alien in this.areaMap.Aliens.ToArray())
             {
-                this.entitiesTileMap[alien.TileX, alien.TileY] = "Xarling";
+                this.entitiesTileMap[alien.TileX, alien.TileY] = alien.Name;
             }
 
             this.effectsTileMap.Clear();
