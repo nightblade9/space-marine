@@ -162,7 +162,7 @@ namespace DeenGames.SpaceMarine.Scenes
                         if (target != null)
                         {
                             // pew pew
-                            this.areaMap.OnPlayerMoved();
+                            this.areaMap.PlayerShoots(target);
                         }
                         this.rangeAttackTiles.Clear();
                         this.RedrawEverything();

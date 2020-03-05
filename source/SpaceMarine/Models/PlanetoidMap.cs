@@ -82,13 +82,7 @@ namespace DeenGames.SpaceMarine.Models
             {
                 var target = this.Aliens.Single(m => m.TileX == destinationX && m.TileY == destinationY);
                 var damage = DamageCalculator.CalculateDamage(entity, target);
-                target.CurrentHealth -= damage;
-                this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"Alien hits alien for {damage} damage! {(target.CurrentHealth <= 0 ? "It dies!" : "")}");
-
-                if (target.CurrentHealth <= 0)
-                {
-                    this.Aliens.Remove(target);
-                }
+                this.HarmAlien(target, damage);
             }
             else if (this.Player.TileX == destinationX && this.Player.TileY == destinationY)
             {
@@ -125,6 +119,24 @@ namespace DeenGames.SpaceMarine.Models
             }
         }
         
+        public void PlayerShoots(MapEntity target)
+        {
+            var damage = DamageCalculator.CalculateDamage(this.Player, target);
+            this.HarmAlien(target, damage);
+            this.OnPlayerMoved();
+        }
+
+        private void HarmAlien(MapEntity target, int damage)
+        {
+            target.CurrentHealth -= damage;
+            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"You zap the alien for {damage} damage! {(target.CurrentHealth <= 0 ? "It dies!" : "")}");
+
+            if (target.CurrentHealth <= 0)
+            {
+                this.Aliens.Remove(target);
+            }
+        }
+
         private void IncrementWave()
         {
             this.countDownLeft = CountDownMoves;
