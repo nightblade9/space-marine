@@ -11,7 +11,8 @@ namespace DeenGames.SpaceMarine.Models
     // Map of a planetoid
     class PlanetoidMap
     {
-        internal List<MapEntity> Aliens = new List<MapEntity>();
+        internal readonly List<MapEntity> Aliens = new List<MapEntity>();
+        internal readonly List<Tuple<int, int>> Plasma = new List<Tuple<int, int>>();
         internal readonly MapEntity Player;
         internal int CurrentWaveNumber = 0; // floor number
 
@@ -115,8 +116,13 @@ namespace DeenGames.SpaceMarine.Models
 
             foreach (var alien in this.Aliens.ToArray())
             {
+                (var oldX, var oldY) = (alien.TileX, alien.TileY);
                 (int dx, int dy) = alien.Stalk(this.Player);
                 this.TryToMove(alien, dx, dy);
+                if (alien.Name == "Rayon")
+                {
+                    this.Plasma.Add(new Tuple<int, int>(oldX, oldY));
+                }
             }
         }
         

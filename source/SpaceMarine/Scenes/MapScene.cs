@@ -69,7 +69,9 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH,
                 Path.Join("Content", "Images", "Effects.png"),
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
+
             this.effectsTileMap.Define("LineOfSight", 0, 0);
+            this.effectsTileMap.Define("Plasma", 1, 0);
             
             this.Add(this.effectsTileMap);
 
@@ -175,13 +177,20 @@ namespace DeenGames.SpaceMarine.Scenes
         private void RedrawEverything()
         {
             this.entitiesTileMap.Clear();
+            this.effectsTileMap.Clear();
+
+            foreach (var plasma in this.areaMap.Plasma)
+            {
+                this.effectsTileMap[plasma.Item1, plasma.Item2] = "Plasma";
+            }
+
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
+            
             foreach (var alien in this.areaMap.Aliens.ToArray())
             {
                 this.entitiesTileMap[alien.TileX, alien.TileY] = alien.Name;
             }
 
-            this.effectsTileMap.Clear();
             foreach (var spot in this.rangeAttackTiles)
             {
                 this.effectsTileMap[spot.X, spot.Y] = "LineOfSight";
