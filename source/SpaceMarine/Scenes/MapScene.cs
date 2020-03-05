@@ -15,6 +15,7 @@ namespace DeenGames.SpaceMarine.Scenes
         // View
         private TileMap tileMap;
         private TileMap entitiesTileMap;
+        private TileMap effectsTileMap;
         private Entity statusLabel;
 
         // Model
@@ -59,6 +60,14 @@ namespace DeenGames.SpaceMarine.Scenes
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
 
+            this.effectsTileMap = new TileMap(
+                Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH,
+                Path.Join("Content", "Images", "Effects.png"),
+                Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
+            this.effectsTileMap.Define("LineOfSight", 0, 0);
+            
+            this.Add(this.effectsTileMap);
+
             this.statusLabel = new Entity(true);
             this.Add(this.statusLabel);
                 this.statusLabel.Move(0, Constants.MAP_TILES_HIGH * Constants.TILE_HEIGHT * Constants.GAME_ZOOM)
@@ -89,18 +98,22 @@ namespace DeenGames.SpaceMarine.Scenes
                 if (action == PuffinAction.Up)
                 {
                     areaMap.OnPlayerIntendToMove(0, -1);
+                    this.effectsTileMap.Clear();
                 }
                 else if (action == PuffinAction.Down)
                 {
                     areaMap.OnPlayerIntendToMove(0, 1);
+                    this.effectsTileMap.Clear();
                 }
                 else if (action == PuffinAction.Left)
                 {
                     areaMap.OnPlayerIntendToMove(-1, 0);
+                    this.effectsTileMap.Clear();
                 }
                 else if (action == PuffinAction.Right)
                 {
                     areaMap.OnPlayerIntendToMove(1, 0);
+                    this.effectsTileMap.Clear();
                 }
 
                 this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
@@ -116,13 +129,21 @@ namespace DeenGames.SpaceMarine.Scenes
                 var marineEvent = (SpaceMarineEvent)data;
                 if (marineEvent == SpaceMarineEvent.AimOrFire)
                 {
-                    var target = this.areaMap.Aliens.OrderByDescending(
+                    this.effectsTileMap.Clear();
+                    var target = this.areaMap.Aliens.OrderBy(
                         a => GoRogue.Distance.EUCLIDEAN.Calculate(a.TileX, a.TileY, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
                         .FirstOrDefault();
                     
                     if (target != null)
                     {
-                        var line = GoRogue.Lines.Get(new GoRogue.Coord(target.TileX, target.TileY), new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY));
+                        var start = new GoRogue.Coord(target.TileX, target.TileY);
+                        var stop = new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY);
+
+                        var line = GoRogue.Lines.Get(start, stop);//.Where(s => s.X != this.areaMap.Player.TileX && s.Y != this.areaMap.Player.TileY);
+                        foreach (var spot in line)
+                        {
+                            this.effectsTileMap[spot.X, spot.Y] = "LineOfSight";
+                        }
                     }
                 }
             }
