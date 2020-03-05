@@ -158,7 +158,7 @@ namespace DeenGames.SpaceMarine.Models
                 {
                     for (var x = spawnPoint.Item1 - ALIEN_TILE_SPAWN_RADIUS; x <= spawnPoint.Item1 + ALIEN_TILE_SPAWN_RADIUS; x++)
                     {
-                        if (random.NextDouble() <= ALIEN_TILE_SPAWN_PROBABILITY)
+                        if (this.isWalkable[x, y] && random.NextDouble() <= ALIEN_TILE_SPAWN_PROBABILITY)
                         {
                             this.Aliens.Add(AlienSpawner.Spawn("Xarling", x, y));
                         }

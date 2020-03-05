@@ -136,10 +136,20 @@ namespace DeenGames.SpaceMarine.Scenes
                     
                     if (target != null)
                     {
-                        var start = new GoRogue.Coord(target.TileX, target.TileY);
-                        var stop = new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY);
+                        var stop = new GoRogue.Coord(target.TileX, target.TileY);
+                        var start = new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY);
+                        // Calculate line, stop at the first solid tile; order from player => target
+                        var line = GoRogue.Lines.Get(start, stop)
+                            .Where(s => s != start)
+                            .OrderBy(s => GoRogue.Distance.EUCLIDEAN.Calculate(s.X, s.Y, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
+                            .ToList();
 
-                        var line = GoRogue.Lines.Get(start, stop);//.Where(s => s.X != this.areaMap.Player.TileX && s.Y != this.areaMap.Player.TileY);
+                        var stopAt = line.FirstOrDefault(s => this.areaMap[s.X, s.Y] == false);
+                        if (stopAt.X != 0 && stopAt.Y != 0) // not nullable, we get zero if not found
+                        {
+                            var stopIndex = line.IndexOf(stopAt);
+                            line = line.GetRange(0, stopIndex);
+                        }
                         foreach (var spot in line)
                         {
                             this.effectsTileMap[spot.X, spot.Y] = "LineOfSight";
