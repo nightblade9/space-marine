@@ -25,6 +25,7 @@ namespace DeenGames.SpaceMarine.Models
         private const int MIN_CLUSTER_SIZE = 5;
         private const int MAX_CLUSTER_SIZE = 8;
         private const float RAYON_SPAWN_PROBABILITY = 0.3f;
+        private const float PLASMA_DAMAGE_PERCENT = 0.3f;
 
         private readonly ArrayMap<bool> isWalkable;
         private readonly Random random = new Random();
@@ -42,7 +43,7 @@ namespace DeenGames.SpaceMarine.Models
             this.width = Constants.MAP_TILES_WIDE;
             this.height = Constants.MAP_TILES_HIGH;
             this.isWalkable = new ArrayMap<bool>(Constants.MAP_TILES_WIDE, Constants.MAP_TILES_HIGH);
-            this.Player = new MapEntity("Player", PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
+            this.Player = new MapEntity("You", PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
 
             this.GenerateMap();
             this.IncrementWave();
@@ -80,7 +81,14 @@ namespace DeenGames.SpaceMarine.Models
             {
                 return;
             }
-            else if (this.Aliens.Any(m => m.TileX == destinationX && m.TileY == destinationY))
+
+            var plasma = this.Plasma.SingleOrDefault(p => p.Item1 == destinationX && p.Item2 == destinationY);
+            if (plasma != null)
+            {
+                this.PlasmaDamage(entity);
+            }
+
+            if (this.Aliens.Any(m => m.TileX == destinationX && m.TileY == destinationY))
             {
                 var target = this.Aliens.Single(m => m.TileX == destinationX && m.TileY == destinationY);
                 var damage = DamageCalculator.CalculateDamage(entity, target);
@@ -119,7 +127,7 @@ namespace DeenGames.SpaceMarine.Models
                 (var oldX, var oldY) = (alien.TileX, alien.TileY);
                 (int dx, int dy) = alien.Stalk(this.Player);
                 this.TryToMove(alien, dx, dy);
-                if (alien.Name == "Rayon")
+                if (alien.Name == "Rayon" && !this.Plasma.Any(p => p.Item1 == oldX && p.Item2 == oldY))
                 {
                     this.Plasma.Add(new Tuple<int, int>(oldX, oldY));
                 }
@@ -136,11 +144,29 @@ namespace DeenGames.SpaceMarine.Models
         private void HarmAlien(MapEntity target, int damage)
         {
             target.CurrentHealth -= damage;
-            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"You zap the alien for {damage} damage! {(target.CurrentHealth <= 0 ? "It dies!" : "")}");
+            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{target.Name} take(s) {damage} damage! {(target.CurrentHealth <= 0 ? "It dies!" : "")}");
 
             if (target.CurrentHealth <= 0)
             {
                 this.Aliens.Remove(target);
+            }
+        }
+
+        private void PlasmaDamage(MapEntity entity)
+        {
+            var damage = (int)(PLASMA_DAMAGE_PERCENT * entity.TotalHealth);
+            entity.CurrentHealth -= damage;
+            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{entity.Name} burns on plasma!");
+            if (entity.CurrentHealth <= 0)
+            {
+                if (entity == this.Player)
+                {
+                    this.gameOver = true;
+                }
+                else
+                {
+                    this.Aliens.Remove(entity);
+                }
             }
         }
 
