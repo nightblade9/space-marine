@@ -43,7 +43,6 @@ namespace DeenGames.SpaceMarine.Models
             this.Player = new MapEntity(PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
 
             this.GenerateMap();
-            this.GenerateAliens();
             this.IncrementWave();
         }
 
@@ -62,7 +61,6 @@ namespace DeenGames.SpaceMarine.Models
             }
 
             this.TryToMove(this.Player, deltaX, deltaY);
-            this.UpdateCountDown();
         }
 
         public void TryToMove(MapEntity entity, int deltaX, int deltaY)
@@ -109,14 +107,24 @@ namespace DeenGames.SpaceMarine.Models
                 entity.TileX = destinationX;
                 entity.TileY = destinationY;
             }
-        }
-        
-        public void GenerateAliens()
-        {
-            // TODO: more sophisticated.
-            var numAliens = random.Next(6, 10);
+
+            if (entity  == Player)
+            {
+                this.OnPlayerMoved();
+            }
         }
 
+        public void OnPlayerMoved()
+        {
+            this.UpdateCountDown();
+
+            foreach (var alien in this.Aliens.ToArray())
+            {
+                (int dx, int dy) = alien.Stalk(this.Player);
+                this.TryToMove(alien, dx, dy);
+            }
+        }
+        
         private void IncrementWave()
         {
             this.countDownLeft = CountDownMoves;

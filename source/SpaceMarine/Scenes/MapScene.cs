@@ -5,6 +5,7 @@ using Puffin.Core.Ecs.Components;
 using Puffin.Core.IO;
 using Puffin.Core.Tiles;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
@@ -20,6 +21,9 @@ namespace DeenGames.SpaceMarine.Scenes
 
         // Model
         private PlanetoidMap areaMap;
+
+        // If aiming, becomes the path from us to the alien; if not, empty list.
+        private List<GoRogue.Coord> rangeAttackTiles = new List<GoRogue.Coord>();
 
         override public void Ready()
         {
@@ -91,71 +95,95 @@ namespace DeenGames.SpaceMarine.Scenes
         {
             if (data is PuffinAction)
             {
-                this.entitiesTileMap.Clear();
-
                 var action = (PuffinAction)data;
 
                 if (action == PuffinAction.Up)
                 {
                     areaMap.OnPlayerIntendToMove(0, -1);
-                    this.effectsTileMap.Clear();
+                    this.rangeAttackTiles.Clear();
                 }
                 else if (action == PuffinAction.Down)
                 {
                     areaMap.OnPlayerIntendToMove(0, 1);
-                    this.effectsTileMap.Clear();
+                    this.rangeAttackTiles.Clear();
                 }
                 else if (action == PuffinAction.Left)
                 {
                     areaMap.OnPlayerIntendToMove(-1, 0);
-                    this.effectsTileMap.Clear();
+                    this.rangeAttackTiles.Clear();
                 }
                 else if (action == PuffinAction.Right)
                 {
                     areaMap.OnPlayerIntendToMove(1, 0);
-                    this.effectsTileMap.Clear();
+                    this.rangeAttackTiles.Clear();
                 }
 
-                this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
-                foreach (var alien in this.areaMap.Aliens.ToArray())
-                {
-                    (int dx, int dy) = alien.Stalk(this.areaMap.Player);
-                    areaMap.TryToMove(alien, dx, dy);
-                    this.entitiesTileMap[alien.TileX, alien.TileY] = "Xarling";
-                }
+                this.RedrawEverything();
             }
             else if (data is SpaceMarineEvent)
             {
                 var marineEvent = (SpaceMarineEvent)data;
                 if (marineEvent == SpaceMarineEvent.AimOrFire)
                 {
-                    this.effectsTileMap.Clear();
-                    var target = this.areaMap.Aliens.OrderBy(
-                        a => GoRogue.Distance.EUCLIDEAN.Calculate(a.TileX, a.TileY, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
-                        .FirstOrDefault();
-                    
-                    if (target != null)
+                    if (!rangeAttackTiles.Any())
                     {
-                        var stop = new GoRogue.Coord(target.TileX, target.TileY);
-                        var start = new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY);
-                        // Calculate line, stop at the first solid tile; order from player => target
-                        var line = GoRogue.Lines.Get(start, stop)
-                            .Where(s => s != start)
-                            .OrderBy(s => GoRogue.Distance.EUCLIDEAN.Calculate(s.X, s.Y, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
-                            .ToList();
+                        this.effectsTileMap.Clear();
+                        var target = this.areaMap.Aliens.OrderBy(
+                            a => GoRogue.Distance.EUCLIDEAN.Calculate(a.TileX, a.TileY, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
+                            .FirstOrDefault();
+                        
+                        if (target != null)
+                        {
+                            var stop = new GoRogue.Coord(target.TileX, target.TileY);
+                            var start = new GoRogue.Coord(this.areaMap.Player.TileX, this.areaMap.Player.TileY);
+                            // Calculate line, stop at the first solid tile; order from player => target
+                            var line = GoRogue.Lines.Get(start, stop)
+                                .Where(s => s != start)
+                                .OrderBy(s => GoRogue.Distance.EUCLIDEAN.Calculate(s.X, s.Y, this.areaMap.Player.TileX, this.areaMap.Player.TileY))
+                                .ToList();
 
-                        var stopAt = line.FirstOrDefault(s => this.areaMap[s.X, s.Y] == false);
-                        if (stopAt.X != 0 && stopAt.Y != 0) // not nullable, we get zero if not found
-                        {
-                            var stopIndex = line.IndexOf(stopAt);
-                            line = line.GetRange(0, stopIndex);
-                        }
-                        foreach (var spot in line)
-                        {
-                            this.effectsTileMap[spot.X, spot.Y] = "LineOfSight";
+                            var stopAt = line.FirstOrDefault(s => this.areaMap[s.X, s.Y] == false);
+                            if (stopAt.X != 0 && stopAt.Y != 0) // not nullable, we get zero if not found
+                            {
+                                var stopIndex = line.IndexOf(stopAt);
+                                line = line.GetRange(0, stopIndex);
+                            }
+
+                            this.rangeAttackTiles = line;
+                            
+                            // Draw
+                            this.RedrawEverything();
                         }
                     }
+                    else
+                    {
+                        var lastTile = this.rangeAttackTiles.Last();
+                        var target = this.areaMap.Aliens.SingleOrDefault(a => a.TileX == lastTile.X && a.TileY == lastTile.Y);
+                        if (target != null)
+                        {
+                            // pew pew
+                            this.areaMap.OnPlayerMoved();
+                        }
+                        this.rangeAttackTiles.Clear();
+                        this.RedrawEverything();
+                    }
                 }
+            }
+        }
+
+        private void RedrawEverything()
+        {
+            this.entitiesTileMap.Clear();
+            this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
+            foreach (var alien in this.areaMap.Aliens.ToArray())
+            {
+                this.entitiesTileMap[alien.TileX, alien.TileY] = "Xarling";
+            }
+
+            this.effectsTileMap.Clear();
+            foreach (var spot in this.rangeAttackTiles)
+            {
+                this.effectsTileMap[spot.X, spot.Y] = "LineOfSight";
             }
         }
 
