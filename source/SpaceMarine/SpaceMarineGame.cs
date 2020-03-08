@@ -7,17 +7,20 @@ namespace DeenGames.SpaceMarine
 {
     public class SpaceMarineGame : PuffinGame
     {
+        public static SpaceMarineGame Instance { get; private set; }
+
         public SpaceMarineGame() :
             base(
                 (int)(Constants.MAP_TILES_WIDE * Constants.TILE_WIDTH * Constants.GAME_ZOOM),
                 (int)(Constants.MAP_TILES_HIGH * Constants.TILE_HEIGHT * Constants.GAME_ZOOM) + Constants.STATUS_BAR_HEIGHT)
         {
+            SpaceMarineGame.Instance = this;
             this.ActionToKeys[SpaceMarineEvent.AimOrFire] = new List<Keys>() { Keys.F };
         }
 
         override protected void Ready()
         {
-            this.ShowScene(new MapScene());
+            this.ShowScene(new TitleScene());
         }
     }
 }
