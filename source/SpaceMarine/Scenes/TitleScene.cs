@@ -17,20 +17,11 @@ namespace DeenGames.SpaceMarine.Scenes
     {
         override public void Ready()
         {
-            if (!File.Exists("data.dat"))
-            {
-                var empty = new SaveData();
-                var serialized = JsonConvert.SerializeObject(empty);
-                File.WriteAllText("data.dat", serialized);
-            }
-
-            var data = JsonConvert.DeserializeObject<SaveData>(File.ReadAllText("data.dat"));
-
             var title = new Entity().Label("Space Marine").Move(460, 300);
             title.Get<TextLabelComponent>().FontSize = 72;
             this.Add(title);
 
-            var currency = new Entity().Label($"Click to start\nCurrency: {data.Currency}").Move(600, 400);
+            var currency = new Entity().Label($"Click to start\nCurrency: {SaveData.Instance.Currency}").Move(600, 400);
             this.Add(currency);
 
             this.OnMouseClick = () => {

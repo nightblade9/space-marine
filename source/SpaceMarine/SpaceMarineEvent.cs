@@ -5,5 +5,6 @@ namespace DeenGames.SpaceMarine
         ShowMessage,
         AimOrFire,
         Cancel,
+        GoToTitleScene,
     }
 }

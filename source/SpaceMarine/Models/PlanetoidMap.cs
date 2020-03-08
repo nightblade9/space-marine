@@ -1,3 +1,5 @@
+using DeenGames.SpaceMarine;
+using DeenGames.SpaceMarine.Data;
 using DeenGames.SpaceMarine.Helpers;
 using Puffin.Core.Events;
 using GoRogue.MapGeneration;
@@ -60,7 +62,7 @@ namespace DeenGames.SpaceMarine.Models
         {
             if (gameOver)
             {
-                return;
+                this.eventBus.Broadcast(SpaceMarineEvent.GoToTitleScene);
             }
 
             this.TryToMove(this.Player, deltaX, deltaY);
@@ -149,6 +151,7 @@ namespace DeenGames.SpaceMarine.Models
             if (target.CurrentHealth <= 0)
             {
                 this.Aliens.Remove(target);
+                SaveData.Instance.Currency++;
             }
         }
 
