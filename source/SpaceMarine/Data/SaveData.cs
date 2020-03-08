@@ -7,18 +7,35 @@ namespace DeenGames.SpaceMarine.Data
     {
         public static SaveData Instance;
 
-        public int Currency { get; set; }
+        private int currency;
 
         static SaveData()
         {
             if (!File.Exists("data.dat"))
             {
                 var empty = new SaveData();
-                var serialized = JsonConvert.SerializeObject(empty);
-                File.WriteAllText("data.dat", serialized);
+                empty.Save();
             }
 
             SaveData.Instance = JsonConvert.DeserializeObject<SaveData>(File.ReadAllText("data.dat"));
+        }
+
+        public int Currency
+        {
+            get {
+                return this.currency;
+            }
+            set
+            {
+                this.currency = value;
+                this.Save();
+            }
+        }
+
+        private void Save()
+        {
+            var serialized = JsonConvert.SerializeObject(this);
+            File.WriteAllText("data.dat", serialized);
         }
     }
 }
