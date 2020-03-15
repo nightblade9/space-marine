@@ -39,6 +39,10 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
             
             tileMap.Define("Wall", 0, 0);
+            tileMap.Define("Ground", 1, 0);
+            tileMap.Define("Damaged1", 2, 0);
+            tileMap.Define("Damaged2", 3, 0);
+            tileMap.Define("Damaged3", 4, 0);
             
             for (var y = 0; y < Constants.MAP_TILES_HIGH; y++)
             {
@@ -47,6 +51,10 @@ namespace DeenGames.SpaceMarine.Scenes
                     if (!areaMap[x, y])
                     {
                         tileMap[x, y] = "Wall";
+                    }
+                    else
+                    {
+                        tileMap[x, y] = "Ground";
                     }
                 }
             }
@@ -71,7 +79,6 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
 
             this.effectsTileMap.Define("LineOfSight", 0, 0);
-            this.effectsTileMap.Define("Plasma", 1, 0);
             
             this.Add(this.effectsTileMap);
 
@@ -177,16 +184,33 @@ namespace DeenGames.SpaceMarine.Scenes
 
         private void RedrawEverything()
         {
+            this.tileMap.Clear();
             this.entitiesTileMap.Clear();
             this.effectsTileMap.Clear();
 
-            foreach (var plasma in this.areaMap.Plasma)
-            {
-                this.effectsTileMap[plasma.Item1, plasma.Item2] = "Plasma";
-            }
-
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
             
+            for (var y = 0; y < Constants.MAP_TILES_HIGH; y++)
+            {
+                for (var x = 0; x < Constants.MAP_TILES_WIDE; x++)
+                {
+                    if (this.areaMap[x, y] != true)
+                    {
+                        this.tileMap[x, y] = "Wall";
+                    }
+                    else
+                    {
+                        this.tileMap[x, y] = "Ground";
+                    }
+
+                    var plasma = this.areaMap.Plasma[new Tuple<int, int>(x, y)];
+                    if (plasma > 0)
+                    {
+                        this.tileMap[x, y] = $"Damaged{plasma}";
+                    }
+                }
+            }
+
             foreach (var alien in this.areaMap.Aliens.ToArray())
             {
                 this.entitiesTileMap[alien.TileX, alien.TileY] = alien.Name;

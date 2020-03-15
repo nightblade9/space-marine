@@ -14,7 +14,8 @@ namespace DeenGames.SpaceMarine.Models
     class PlanetoidMap
     {
         internal readonly List<MapEntity> Aliens = new List<MapEntity>();
-        internal readonly List<Tuple<int, int>> Plasma = new List<Tuple<int, int>>();
+        // (x, y) => damage
+        internal readonly Dictionary<Tuple<int, int>, int> Plasma = new Dictionary<Tuple<int, int>, int>();
         internal readonly MapEntity Player;
         internal int CurrentWaveNumber = 0; // floor number
 
@@ -28,6 +29,7 @@ namespace DeenGames.SpaceMarine.Models
         private const int MAX_CLUSTER_SIZE = 8;
         private const float RAYON_SPAWN_PROBABILITY = 0.3f;
         private const float PLASMA_DAMAGE_PERCENT = 0.3f;
+        private const int MAX_PLASMA = 3;
 
         private readonly ArrayMap<bool> isWalkable;
         private readonly Random random = new Random();
@@ -48,6 +50,15 @@ namespace DeenGames.SpaceMarine.Models
             this.Player = new MapEntity("You", PLAYER_STARTING_HEALTH, PLAYER_STRENGTH, PLAYER_DEFENSE, this.width / 2, this.height / 2);
 
             this.GenerateMap();
+
+            for (var y = 0; y < this.height; y++)
+            {
+                for (var x = 0; x < this.width; x++)
+                {
+                    this.Plasma[new Tuple<int, int>(x, y)] = 0;
+                }
+            }
+
             this.IncrementWave();
         }
 
@@ -84,8 +95,7 @@ namespace DeenGames.SpaceMarine.Models
                 return;
             }
 
-            var plasma = this.Plasma.SingleOrDefault(p => p.Item1 == destinationX && p.Item2 == destinationY);
-            if (plasma != null)
+            if (this.Plasma[new Tuple<int, int>(destinationX, destinationY)] > 0)
             {
                 this.PlasmaDamage(entity);
             }
@@ -129,9 +139,10 @@ namespace DeenGames.SpaceMarine.Models
                 (var oldX, var oldY) = (alien.TileX, alien.TileY);
                 (int dx, int dy) = alien.Stalk(this.Player);
                 this.TryToMove(alien, dx, dy);
-                if (alien.Name == "Rayon" && !this.Plasma.Any(p => p.Item1 == oldX && p.Item2 == oldY))
+                var coordinates = new Tuple<int, int>(oldX, oldY);
+                if (alien.Name == "Rayon" && this.Plasma[coordinates] < MAX_PLASMA)
                 {
-                    this.Plasma.Add(new Tuple<int, int>(oldX, oldY));
+                    this.Plasma[coordinates]++;
                 }
             }
         }
