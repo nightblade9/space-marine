@@ -19,7 +19,6 @@ namespace DeenGames.SpaceMarine.Models
         internal readonly MapEntity Player;
         internal int CurrentWaveNumber = 0; // floor number
 
-        private const float ALIEN_TILE_SPAWN_PROBABILITY = 0.5f;
         private const int ALIEN_TILE_SPAWN_RADIUS = 1;
         private const int PLAYER_STARTING_HEALTH = 250;
         private const int PLAYER_STRENGTH = 20;
@@ -30,6 +29,7 @@ namespace DeenGames.SpaceMarine.Models
         private const float RAYON_SPAWN_PROBABILITY = 0.3f;
         private const float PLASMA_DAMAGE_PERCENT = 0.3f;
         private const int MAX_PLASMA = 3;
+        private const int ALIEN_POINTS_PER_WAVE = 12;
 
         private readonly ArrayMap<bool> isWalkable;
         private readonly Random random = new Random();
@@ -40,6 +40,11 @@ namespace DeenGames.SpaceMarine.Models
         private int countDownLeft = 0;
         private EventBus eventBus;
         private bool gameOver = false;
+        private Dictionary<string, int> alienCostPoints = new Dictionary<string, int>()
+        { 
+            { "Xarling", 1 },
+            { "Rayon", 3 },
+        };
         
         public PlanetoidMap(EventBus eventBus)
         {
@@ -201,6 +206,7 @@ namespace DeenGames.SpaceMarine.Models
                 throw new InvalidOperationException("Count-down already in progress!");
             }
 
+            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, "Alien meteors inbound.");
             this.countDownLeft = CountDownMoves;
             this.CurrentWaveNumber++;
         }
@@ -217,12 +223,12 @@ namespace DeenGames.SpaceMarine.Models
                 else
                 {
                     this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, "Alien life-forms detected.");
-                    this.SpawnMoreOverlords();
+                    this.SpawnAliens();
                 }
             }
         }
 
-        private void SpawnMoreOverlords()
+        private void SpawnAliens()
         {
             var cornerOffset = ALIEN_TILE_SPAWN_RADIUS + 2; // spacing from walls
             var corners = new List<Tuple<int, int>> {
@@ -233,21 +239,40 @@ namespace DeenGames.SpaceMarine.Models
             };
 
             var spawnPoints = corners.OrderBy(r => random.Next()).Take(2);
+
+            //// Spawning aliens works on a points system: 12n points on wave n, xarlings are one point, etc.
+            // We have a hard limit of 25 (5x5) aliens per spawn-point. if we hit the limit but still have
+            // more points left to use, um, do nothing for now.
             foreach (var spawnPoint in spawnPoints)
             {
-                // Spawn stuff in a random 3x3 radius. Each point has an independent chance of spawning an alien.
-                for (var y = spawnPoint.Item2 - ALIEN_TILE_SPAWN_RADIUS; y <= spawnPoint.Item2 + ALIEN_TILE_SPAWN_RADIUS; y++)
+                var pointsLeft = this.CurrentWaveNumber * ALIEN_POINTS_PER_WAVE;
+
+                var minX = spawnPoint.Item1;
+                var minY = spawnPoint.Item2;
+                var maxX = spawnPoint.Item1 + 5;
+                var maxY = spawnPoint.Item2 + 5;
+                var iterations = 0;
+
+                while (pointsLeft > 0 && iterations++ < 1000)
                 {
-                    for (var x = spawnPoint.Item1 - ALIEN_TILE_SPAWN_RADIUS; x <= spawnPoint.Item1 + ALIEN_TILE_SPAWN_RADIUS; x++)
+                    var x = random.Next(minX, maxX);
+                    var y = random.Next(minY, maxY);
+
+                    if (x >= 0 && y >= 0 && x < this.width && y < this.height && this.isWalkable[x, y] &&
+                    (this.Player.TileX != x && this.Player.TileY != y) && !this.Aliens.Any(a => a.TileX == x && a.TileY == y))
                     {
-                        if (this.isWalkable[x, y] && random.NextDouble() <= ALIEN_TILE_SPAWN_PROBABILITY)
-                        {
-                            var alien = random.NextDouble() <= RAYON_SPAWN_PROBABILITY ? "Rayon" : "Xarling";
-                            this.Aliens.Add(AlienSpawner.Spawn(alien, x, y));
-                        }
+                        var alien = pickAlien(pointsLeft);
+                        this.Aliens.Add(AlienSpawner.Spawn(alien, x, y));
+                        pointsLeft -= this.alienCostPoints[alien];
                     }
                 }
             }
+        }
+
+        private string pickAlien(int pointsLeft)
+        {
+            var possibilities = this.alienCostPoints.Where(kvp => kvp.Value <= pointsLeft).ToArray();
+            return possibilities[random.Next(possibilities.Length)].Key;
         }
 
         private void GenerateMap()
