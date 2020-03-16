@@ -259,20 +259,28 @@ namespace DeenGames.SpaceMarine.Models
                     var y = random.Next(minY, maxY);
 
                     if (x >= 0 && y >= 0 && x < this.width && y < this.height && this.isWalkable[x, y] &&
-                    (this.Player.TileX != x && this.Player.TileY != y) && !this.Aliens.Any(a => a.TileX == x && a.TileY == y))
+                    (this.Player.TileX != x && this.Player.TileY != y))
                     {
-                        var alien = pickAlien(pointsLeft);
-                        this.Aliens.Add(AlienSpawner.Spawn(alien, x, y));
-                        pointsLeft -= this.alienCostPoints[alien];
+                        var alienThere = this.Aliens.SingleOrDefault(a => a.TileX == x && a.TileY == y);
+                        IEnumerable<KeyValuePair<string, int>> possibilities;
+                        possibilities = this.alienCostPoints.Where(kvp => kvp.Value <= pointsLeft);
+                        
+                        // Picked a spot with an alien. Probably because we've used all valid locations but have points left.
+                        if (alienThere != null)
+                        {
+                            possibilities = possibilities.Where(kvp => kvp.Value > alienCostPoints[alienThere.Name]);
+                        }
+
+                        if (possibilities.Any())
+                        {
+                            var alien = possibilities.ElementAt(random.Next(possibilities.Count())).Key;
+                            this.Aliens.Add(AlienSpawner.Spawn(alien, x, y));
+                            pointsLeft -= this.alienCostPoints[alien];
+                            this.Aliens.Remove(alienThere); // No points refund, sorry mate.
+                        }
                     }
                 }
             }
-        }
-
-        private string pickAlien(int pointsLeft)
-        {
-            var possibilities = this.alienCostPoints.Where(kvp => kvp.Value <= pointsLeft).ToArray();
-            return possibilities[random.Next(possibilities.Length)].Key;
         }
 
         private void GenerateMap()
