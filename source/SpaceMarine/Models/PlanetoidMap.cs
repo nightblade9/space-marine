@@ -167,18 +167,15 @@ namespace DeenGames.SpaceMarine.Models
 
         private void PlasmaDamage(MapEntity entity)
         {
-            var damage = (int)(PLASMA_DAMAGE_PERCENT * entity.TotalHealth);
-            entity.CurrentHealth -= damage;
-            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{entity.Name} burns on plasma!");
-            if (entity.CurrentHealth <= 0)
+            // Only applies to player, sorry bruh
+            if (entity == this.Player)
             {
-                if (entity == this.Player)
+                var damage = (int)(PLASMA_DAMAGE_PERCENT * entity.TotalHealth);
+                entity.CurrentHealth -= damage;
+                this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{entity.Name} burn on plasma!");
+                if (entity.CurrentHealth <= 0)
                 {
                     this.gameOver = true;
-                }
-                else
-                {
-                    this.OnAlienDied(entity);
                 }
             }
         }
@@ -203,7 +200,7 @@ namespace DeenGames.SpaceMarine.Models
             {
                 throw new InvalidOperationException("Count-down already in progress!");
             }
-            
+
             this.countDownLeft = CountDownMoves;
             this.CurrentWaveNumber++;
         }
