@@ -161,8 +161,7 @@ namespace DeenGames.SpaceMarine.Models
 
             if (target.CurrentHealth <= 0)
             {
-                this.Aliens.Remove(target);
-                SaveData.Instance.Currency++;
+                this.OnAlienDied(target);                
             }
         }
 
@@ -179,13 +178,32 @@ namespace DeenGames.SpaceMarine.Models
                 }
                 else
                 {
-                    this.Aliens.Remove(entity);
+                    this.OnAlienDied(entity);
                 }
             }
         }
 
+        private void OnAlienDied(MapEntity alien)
+        {
+            if (this.Aliens.Contains(alien))
+            {
+                this.Aliens.Remove(alien);
+                SaveData.Instance.Currency++;
+                if (!this.Aliens.Any())
+                {
+                    this.IncrementWave();
+                }
+            }
+            
+        }
+
         private void IncrementWave()
         {
+            if (this.countDownLeft > 0)
+            {
+                throw new InvalidOperationException("Count-down already in progress!");
+            }
+            
             this.countDownLeft = CountDownMoves;
             this.CurrentWaveNumber++;
         }
