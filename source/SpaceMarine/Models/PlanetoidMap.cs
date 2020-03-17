@@ -21,12 +21,11 @@ namespace DeenGames.SpaceMarine.Models
 
         private const int ALIEN_TILE_SPAWN_RADIUS = 1;
         private const int PLAYER_STARTING_HEALTH = 250;
-        private const int PLAYER_STRENGTH = 20;
-        private const int PLAYER_DEFENSE = 10;
+        private const int PLAYER_STRENGTH = 15;
+        private const int PLAYER_DEFENSE = 8;
         private const int NUM_CLUSTERS = 6;
         private const int MIN_CLUSTER_SIZE = 5;
         private const int MAX_CLUSTER_SIZE = 8;
-        private const float RAYON_SPAWN_PROBABILITY = 0.3f;
         private const float PLASMA_DAMAGE_PERCENT = 0.3f;
         private const int MAX_PLASMA = 3;
         private const int ALIEN_POINTS_PER_WAVE = 12;
@@ -42,8 +41,9 @@ namespace DeenGames.SpaceMarine.Models
         private bool gameOver = false;
         private Dictionary<string, int> alienCostPoints = new Dictionary<string, int>()
         { 
-            { "Xarling", 1 },
-            { "Rayon", 3 },
+            { "Xarling", 1 }, // Fodder: abundant but weak
+            { "Glannon", 3 }, // Glass cannon: hit hard, die fast
+            { "Rayon", 5 }, // Damages the ground as it walks
         };
         
         public PlanetoidMap(EventBus eventBus)
@@ -144,6 +144,8 @@ namespace DeenGames.SpaceMarine.Models
                 (var oldX, var oldY) = (alien.TileX, alien.TileY);
                 (int dx, int dy) = alien.Stalk(this.Player);
                 this.TryToMove(alien, dx, dy);
+
+                // Apply ground damage to the old coordinates if the alien is ground-damaging
                 var coordinates = new Tuple<int, int>(oldX, oldY);
                 if (alien.Name == "Rayon" && this.Plasma[coordinates] < MAX_PLASMA)
                 {

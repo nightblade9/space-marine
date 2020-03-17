@@ -11,6 +11,8 @@ namespace DeenGames.SpaceMarine.Helpers
             {
                 case "Xarling":
                     return new MapEntity(name, 50, 25, 5, x, y);
+                case "Glannon":
+                    return new MapEntity(name, 40, 35, 0, x, y);
                 case "Rayon":
                     return new MapEntity(name, 25, 15, 10, x, y);
                 default:

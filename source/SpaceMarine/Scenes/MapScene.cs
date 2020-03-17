@@ -69,6 +69,7 @@ namespace DeenGames.SpaceMarine.Scenes
             this.entitiesTileMap.Define("Player", 0, 0);
             this.entitiesTileMap.Define("Xarling", 0, 1);
             this.entitiesTileMap.Define("Rayon", 1, 1);
+            this.entitiesTileMap.Define("Glannon", 2, 1);
 
             this.Add(this.entitiesTileMap);
             this.entitiesTileMap[this.areaMap.Player.TileX, this.areaMap.Player.TileY] = "Player";
