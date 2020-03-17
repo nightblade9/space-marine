@@ -19,7 +19,6 @@ namespace DeenGames.SpaceMarine.Models
         internal readonly MapEntity Player;
         internal int CurrentWaveNumber = 0; // floor number
 
-        private const float ALIEN_TILE_SPAWN_PROBABILITY = 0.5f;
         private const int ALIEN_TILE_SPAWN_RADIUS = 1;
         private const int PLAYER_STARTING_HEALTH = 250;
         private const int PLAYER_STRENGTH = 20;
@@ -30,6 +29,7 @@ namespace DeenGames.SpaceMarine.Models
         private const float RAYON_SPAWN_PROBABILITY = 0.3f;
         private const float PLASMA_DAMAGE_PERCENT = 0.3f;
         private const int MAX_PLASMA = 3;
+        private const int ALIEN_POINTS_PER_WAVE = 12;
 
         private readonly ArrayMap<bool> isWalkable;
         private readonly Random random = new Random();
@@ -40,6 +40,11 @@ namespace DeenGames.SpaceMarine.Models
         private int countDownLeft = 0;
         private EventBus eventBus;
         private bool gameOver = false;
+        private Dictionary<string, int> alienCostPoints = new Dictionary<string, int>()
+        { 
+            { "Xarling", 1 },
+            { "Rayon", 3 },
+        };
         
         public PlanetoidMap(EventBus eventBus)
         {
@@ -161,31 +166,47 @@ namespace DeenGames.SpaceMarine.Models
 
             if (target.CurrentHealth <= 0)
             {
-                this.Aliens.Remove(target);
-                SaveData.Instance.Currency++;
+                this.OnAlienDied(target);                
             }
         }
 
         private void PlasmaDamage(MapEntity entity)
         {
-            var damage = (int)(PLASMA_DAMAGE_PERCENT * entity.TotalHealth);
-            entity.CurrentHealth -= damage;
-            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{entity.Name} burns on plasma!");
-            if (entity.CurrentHealth <= 0)
+            // Only applies to player, sorry bruh
+            if (entity == this.Player)
             {
-                if (entity == this.Player)
+                var damage = (int)(PLASMA_DAMAGE_PERCENT * entity.TotalHealth);
+                entity.CurrentHealth -= damage;
+                this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, $"{entity.Name} burn on plasma!");
+                if (entity.CurrentHealth <= 0)
                 {
                     this.gameOver = true;
-                }
-                else
-                {
-                    this.Aliens.Remove(entity);
                 }
             }
         }
 
+        private void OnAlienDied(MapEntity alien)
+        {
+            if (this.Aliens.Contains(alien))
+            {
+                this.Aliens.Remove(alien);
+                SaveData.Instance.Currency++;
+                if (!this.Aliens.Any())
+                {
+                    this.IncrementWave();
+                }
+            }
+            
+        }
+
         private void IncrementWave()
         {
+            if (this.countDownLeft > 0)
+            {
+                throw new InvalidOperationException("Count-down already in progress!");
+            }
+
+            this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, "Alien meteors inbound.");
             this.countDownLeft = CountDownMoves;
             this.CurrentWaveNumber++;
         }
@@ -202,12 +223,12 @@ namespace DeenGames.SpaceMarine.Models
                 else
                 {
                     this.eventBus.Broadcast(SpaceMarineEvent.ShowMessage, "Alien life-forms detected.");
-                    this.SpawnMoreOverlords();
+                    this.SpawnAliens();
                 }
             }
         }
 
-        private void SpawnMoreOverlords()
+        private void SpawnAliens()
         {
             var cornerOffset = ALIEN_TILE_SPAWN_RADIUS + 2; // spacing from walls
             var corners = new List<Tuple<int, int>> {
@@ -218,17 +239,44 @@ namespace DeenGames.SpaceMarine.Models
             };
 
             var spawnPoints = corners.OrderBy(r => random.Next()).Take(2);
+
+            //// Spawning aliens works on a points system: 12n points on wave n, xarlings are one point, etc.
+            // We have a hard limit of 25 (5x5) aliens per spawn-point. if we hit the limit but still have
+            // more points left to use, um, do nothing for now.
             foreach (var spawnPoint in spawnPoints)
             {
-                // Spawn stuff in a random 3x3 radius. Each point has an independent chance of spawning an alien.
-                for (var y = spawnPoint.Item2 - ALIEN_TILE_SPAWN_RADIUS; y <= spawnPoint.Item2 + ALIEN_TILE_SPAWN_RADIUS; y++)
+                var pointsLeft = this.CurrentWaveNumber * ALIEN_POINTS_PER_WAVE;
+
+                var minX = spawnPoint.Item1;
+                var minY = spawnPoint.Item2;
+                var maxX = spawnPoint.Item1 + 5;
+                var maxY = spawnPoint.Item2 + 5;
+                var iterations = 0;
+
+                while (pointsLeft > 0 && iterations++ < 1000)
                 {
-                    for (var x = spawnPoint.Item1 - ALIEN_TILE_SPAWN_RADIUS; x <= spawnPoint.Item1 + ALIEN_TILE_SPAWN_RADIUS; x++)
+                    var x = random.Next(minX, maxX);
+                    var y = random.Next(minY, maxY);
+
+                    if (x >= 0 && y >= 0 && x < this.width && y < this.height && this.isWalkable[x, y] &&
+                    (this.Player.TileX != x && this.Player.TileY != y))
                     {
-                        if (this.isWalkable[x, y] && random.NextDouble() <= ALIEN_TILE_SPAWN_PROBABILITY)
+                        var alienThere = this.Aliens.SingleOrDefault(a => a.TileX == x && a.TileY == y);
+                        IEnumerable<KeyValuePair<string, int>> possibilities;
+                        possibilities = this.alienCostPoints.Where(kvp => kvp.Value <= pointsLeft);
+                        
+                        // Picked a spot with an alien. Probably because we've used all valid locations but have points left.
+                        if (alienThere != null)
                         {
-                            var alien = random.NextDouble() <= RAYON_SPAWN_PROBABILITY ? "Rayon" : "Xarling";
+                            possibilities = possibilities.Where(kvp => kvp.Value > alienCostPoints[alienThere.Name]);
+                        }
+
+                        if (possibilities.Any())
+                        {
+                            var alien = possibilities.ElementAt(random.Next(possibilities.Count())).Key;
                             this.Aliens.Add(AlienSpawner.Spawn(alien, x, y));
+                            pointsLeft -= this.alienCostPoints[alien];
+                            this.Aliens.Remove(alienThere); // No points refund, sorry mate.
                         }
                     }
                 }

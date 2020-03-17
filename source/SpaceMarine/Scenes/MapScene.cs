@@ -99,7 +99,6 @@ namespace DeenGames.SpaceMarine.Scenes
             this.OnActionPressed = this.ProcessPlayerInput;
 
             // Trigger initial message. TODO: tutorial here.
-            this.ShowMessage("Alien meteors inbound.");
         }
 
         private void ProcessPlayerInput(object data)
