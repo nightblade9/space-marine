@@ -9,7 +9,7 @@ namespace DeenGames.SpaceMarine.Helpers
         {
             switch (name)
             {
-                case "Xarling":
+                case "Xarlin":
                     return new MapEntity(name, 50, 25, 5, x, y);
                 case "Glannon":
                     return new MapEntity(name, 40, 35, 0, x, y);

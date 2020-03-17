@@ -28,7 +28,7 @@ namespace DeenGames.SpaceMarine.Models
         private const int MAX_CLUSTER_SIZE = 8;
         private const float PLASMA_DAMAGE_PERCENT = 0.3f;
         private const int MAX_PLASMA = 3;
-        private const int ALIEN_POINTS_PER_WAVE = 12;
+        private const int ALIEN_POINTS_PER_WAVE = 20;
 
         private readonly ArrayMap<bool> isWalkable;
         private readonly Random random = new Random();
@@ -41,9 +41,17 @@ namespace DeenGames.SpaceMarine.Models
         private bool gameOver = false;
         private Dictionary<string, int> alienCostPoints = new Dictionary<string, int>()
         { 
-            { "Xarling", 1 }, // Fodder: abundant but weak
-            { "Glannon", 3 }, // Glass cannon: hit hard, die fast
-            { "Rayon", 5 }, // Damages the ground as it walks
+            { "Xarlin", 1 }, // Fodder: abundant but weak
+            { "Glannon", 5 }, // Glass cannon: hit hard, die fast
+            { "Rayon", 9 }, // Damages the ground as it walks
+        };
+
+        // This code smells.
+        private Dictionary<string, int> alienMinimumWave = new Dictionary<string, int>()
+        {
+            { "Xarlin", 1 },
+            { "Glannon", 2 },
+            { "Rayon", 3 },
         };
         
         public PlanetoidMap(EventBus eventBus)
@@ -242,7 +250,7 @@ namespace DeenGames.SpaceMarine.Models
 
             var spawnPoints = corners.OrderBy(r => random.Next()).Take(2);
 
-            //// Spawning aliens works on a points system: 12n points on wave n, xarlings are one point, etc.
+            //// Spawning aliens works on a points system: 12n-ish points on wave n, xarlins are one point, etc.
             // We have a hard limit of 25 (5x5) aliens per spawn-point. if we hit the limit but still have
             // more points left to use, um, do nothing for now.
             foreach (var spawnPoint in spawnPoints)
@@ -273,6 +281,8 @@ namespace DeenGames.SpaceMarine.Models
                             possibilities = possibilities.Where(kvp => kvp.Value > alienCostPoints[alienThere.Name]);
                         }
 
+                        // Make sure they don't spawn too early
+                        possibilities = possibilities.Where(kvp => this.alienMinimumWave[kvp.Key] <= this.CurrentWaveNumber);
                         if (possibilities.Any())
                         {
                             var alien = possibilities.ElementAt(random.Next(possibilities.Count())).Key;

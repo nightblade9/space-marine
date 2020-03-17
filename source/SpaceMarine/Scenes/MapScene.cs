@@ -67,7 +67,7 @@ namespace DeenGames.SpaceMarine.Scenes
                 Constants.TILE_WIDTH, Constants.TILE_HEIGHT);
             
             this.entitiesTileMap.Define("Player", 0, 0);
-            this.entitiesTileMap.Define("Xarling", 0, 1);
+            this.entitiesTileMap.Define("Xarlin", 0, 1);
             this.entitiesTileMap.Define("Rayon", 1, 1);
             this.entitiesTileMap.Define("Glannon", 2, 1);
 
